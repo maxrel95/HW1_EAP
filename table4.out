@@ -1,0 +1,40 @@
+ Period:  1959:2-2007:7
+ Number of assets = 35
+ Number of lags =  0
+ OLS
+ Difference in R2s
+ Model     FF3Star
+ FF3       0.017
+
+ p-value under correctly specified models
+ Model     FF3Star
+ FF3       0.342
+
+ p-value under misspecified models (using normal tests for non-nested models)
+ Model     FF3Star
+ FF3       0.694
+
+ p-value under misspecified models (using sequential tests for non-nested models)
+ Model    FF3Star
+ FF3       0.128
+
+ Number of Additional Rejections Using Normal Tests =  0
+
+ GLS
+ Difference in R2s
+ Model     FF3Star
+ FF3       0.008
+
+ p-value under correctly specified models
+ Model     FF3Star
+ FF3       0.848
+
+ p-value under misspecified models (using normal tests for non-nested models)
+ Model     FF3Star
+ FF3       0.851
+
+ p-value under misspecified models (using sequential tests for non-nested models)
+ Model    FF3Star
+ FF3       0.851
+
+ Number of Additional Rejections Using Normal Tests =  0

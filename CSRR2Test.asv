@@ -1,0 +1,83 @@
+% csr r2 test
+clear
+close all 
+clc
+
+addpath( genpath( 'csr' ) )
+
+testasset = xlsread( "testassets.xlsx" );
+testasset = testasset( :, 2:end );
+
+FF = xlsread( "FFFactors.xlsx" );
+FF = FF( :, 2:end );
+
+FFStar = xlsread( "FFFactorsStar.xlsx" );
+FFStar = FFStar( :, 2:end );
+
+% [R2, pval1, pval2a, pval2b, pval3a, pval3b, rse,gamma, trat1, trat2, trat3, trat4, ...
+%           lambda, trat1a, trat2a, trat3a, trat4a, csrt, pval4,pval5] = csrgls( testasset, FF, 0);
+R = testasset;
+delete table1.out
+diary table1.out
+nlag = 0;
+N = size(R,2);
+fprintf(' Period:  1963:1-2021:12\n')
+fprintf(' Number of lags = %2.0f\n',nlag)
+fprintf(' Number of assets = %2.0f\n',N)
+BigF = [FF FFStar];
+modelind = NaN(2, 5);
+modelind(1,1:3) = [1 2 3];                   % CAPM 
+modelind(2,1:3) = [5 8 9];           % C-LAB
+modelind(3,1:3) = [5 6 7];           % FF3
+modelind(4,1:5) = [5 11 12 13 14];   % ICAPM
+modelind(5,1) = 1;                   % CCAPM
+modelind(6,1:3) = [1 3 4];           % C-CAY
+modelind(7,1) = 2;                   % U-CCAPM 
+modelind(8,1:3) = [1 5 10];          % D-CCAPM
+nmodel = 8;
+R2 = zeros(nmodel,1);
+csrta = zeros(nmodel,1);
+csrtb = zeros(nmodel,1);
+pval1a = zeros(nmodel,1);
+pval1b = zeros(nmodel,1);
+pval2a = zeros(nmodel,1);
+pval2b = zeros(nmodel,1);
+pval3a = zeros(nmodel,1);
+pval3b = zeros(nmodel,1);
+pval4a = zeros(nmodel,1);
+pval5a = zeros(nmodel,1);
+pval4b = zeros(nmodel,1);
+pval5b = zeros(nmodel,1);
+rse = zeros(nmodel,1);
+nopar = zeros(nmodel,1);
+for ii=1:2
+    if ii==1
+       fprintf(' OLS CSR\n')
+       fcn = 'csrw';
+    else
+       fprintf('\n GLS CSR\n')
+       fcn = 'csrgls';
+    end
+    for i=1:nmodel
+        m = modelind(i,:);
+        m(isnan(m)) = [];
+        nopar(i) = length(m);
+        F = BigF(:,m);
+        [R2(i),pval1a(i),pval1b(i),pval2a(i),pval2b(i),pval3a(i),pval3b(i),rse(i),gamma,trat1,trat2,trat3,trat4,lambda,trat1a,...
+           trat2a,trat3a,trat4a,csrta(i),pval4a(i),pval5a(i),csrtb(i),pval5a(i),pval5b(i)] = feval(fcn,R,F,nlag);
+    end
+    fprintf('\n                                                CROSS-SECTIONAL R^2\n')
+    fprintf(' ______________________________________________________________________________________________\n')
+    fprintf(' Model                     CAPM    C-LAB     FF3     ICAPM    CCAPM    CC-CAY  U-CCAPM  D-CCAPM\n')
+    fprintf(' ______________________________________________________________________________________________\n')
+    fprintf(' Sample R2               %6.3f   %6.3f   %6.3f   %6.3f   %6.3f   %6.3f   %6.3f   %6.3f\n',R2)
+    fprintf(' Specification Tests:\n')
+    fprintf(' p(R2=1,H1)              %6.3f   %6.3f   %6.3f   %6.3f   %6.3f   %6.3f   %6.3f   %6.3f\n',pval1b)
+    fprintf(' Tests of R2=0:\n')
+    fprintf(' p(R2=0,H0)              %6.3f   %6.3f   %6.3f   %6.3f   %6.3f   %6.3f   %6.3f   %6.3f\n',pval2a)
+    fprintf(' Standard Error of sample R2, applicable when 0<R2<1:\n')
+    fprintf(' se(R2)                  %6.3f   %6.3f   %6.3f   %6.3f   %6.3f   %6.3f   %6.3f   %6.3f\n',rse)
+    fprintf(' Qc(e=0,H1)              %6.3f   %6.3f   %6.3f   %6.3f   %6.3f   %6.3f   %6.3f   %6.3f\n',csrtb)
+    fprintf(' F.S. p-value            %6.3f   %6.3f   %6.3f   %6.3f   %6.3f   %6.3f   %6.3f   %6.3f\n',pval5b)
+    fprintf(' Number of Par.          %6.0f   %6.0f   %6.0f   %6.0f   %6.0f   %6.0f   %6.0f   %6.0f\n',nopar)
+end
