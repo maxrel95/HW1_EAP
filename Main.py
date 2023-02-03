@@ -304,6 +304,18 @@ ccm3=pd.merge(crsp3,
 ccm4=ccm3[(ccm3['wt']>0)& (ccm3['posbm']==1) & (ccm3['nonmissport']==1) & 
           ((ccm3['shrcd']==10) | (ccm3['shrcd']==11))]
 
+#ccm12 = ccm2.drop_duplicates(["permno", "datadate"])
+#ccm12['permno'] = ccm12['permno'].astype( int )
+#ccm12['jdate'] = ccm2['datadate']+MonthEnd(0)
+#bookvalue = ccm12.pivot( index='jdate', columns='permno', values='be' )
+
+#marketcap = crsp2.pivot( index='jdate', columns='permno', values='me' )
+#marketcap[ bookvalue.columns.to_list() ]
+#shrcode = crsp2.pivot( index='jdate', columns='permno', values='shrcd' )
+#exchcode = crsp2.pivot( index='jdate', columns='permno', values='exchcd' )
+#ret = crsp2.pivot( index='jdate', columns='permno', values='ret' )
+#retx = crsp2.pivot( index='jdate', columns='permno', values='retx' )
+#retadj = crsp2.pivot( index='jdate', columns='permno', values='retadj' )3
 
 ############################
 # Form Fama French Factors #
@@ -358,7 +370,7 @@ ff_nfirms=ff_nfirms.rename(columns={'jdate':'date'})
 ###################
 _ff = conn.get_table(library='ff', table='factors_monthly')
 _ff=_ff[['date','mktrf','smb','hml', 'rf']]
-_ff['date']=_ff['date']+MonthEnd(0)
+_ff['date']=_ff['date']+MonthEnd( 0 )
 
 _ffcomp = pd.merge(_ff, ff_factors[['date','WSMB','WHML']], how='inner', on=['date'])
 _ffcomp70=_ffcomp[_ffcomp['date']>='01/01/1970']
@@ -388,8 +400,10 @@ testassets = allData.iloc[ :, -25:]
 # load industry portfolio
 industries = pd.read_excel( 'FF10Industry.xlsx', index_col=0, parse_dates=True ) / 100
 testassets = pd.merge(testassets, industries, how='inner', on='date')
-
+#( testassets.subtract(allFactor[ 'rf' ], axis=0) ).to_excel( 'testassets.xlsx' )
+testassets.to_excel( 'testassets.xlsx' )
 X1 = allFactor[ [ 'mktrf', 'smb', 'hml' ] ]
+X1.to_excel( 'FFFactors.xlsx' )
 
 X1Constant = sm.add_constant( X1 )
 alphasFF = pd.DataFrame( [] )
@@ -441,6 +455,8 @@ print( jointTestAlphaFF, cvJointAlphaTest )
 
 ## fama french star
 X1 = allFactor[ [ 'mktrf', 'WSMB', 'WHML' ] ]
+X1.to_excel( 'FFFactorsStar.xlsx' )
+
 X1Constant = sm.add_constant( X1 )
 
 alphasFFStar = pd.DataFrame( [] )
@@ -515,6 +531,6 @@ pval2a = 2 * ( 1-stats.norm.cdf( np.abs( dtheta2 ) / np.sqrt( vd1 / T ) ) )
 #pval2b = 2 * (1-stats.norm.cdf( np.abs( dtheta2 ) / np.sqrt( vd / T ) ) )
 
 ## CSR r2 test 
-
+# move to matlab
 
 
