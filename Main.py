@@ -385,6 +385,10 @@ testassets = testassets.iloc[ :, :25 ]
 allData = pd.merge( allFactor, testassets, how='left', on='date' )
 testassets = allData.iloc[ :, -25:]
 
+# load industry portfolio
+industries = pd.read_excel( 'FF10Industry.xlsx', index_col=0, parse_dates=True ) / 100
+testassets = pd.merge(testassets, industries, how='inner', on='date')
+
 X1 = allFactor[ [ 'mktrf', 'smb', 'hml' ] ]
 
 X1Constant = sm.add_constant( X1 )
