@@ -15,8 +15,6 @@ from pandas.tseries.offsets import *
 from scipy import stats
 import statsmodels.api as sm
 
-import numpy as np
-
 def nw(h, lag=None, prewhite=False):
     T, r = h.shape
     if lag is not None and lag >= 0:
@@ -57,7 +55,7 @@ def nw(h, lag=None, prewhite=False):
 ###################
 # Connect to WRDS #
 ###################
-conn=wrds.Connection( wrds_username = 'maxrel95' )
+conn = wrds.Connection( wrds_username = 'maxrel95' )
 
 ###################
 # Compustat Block #
