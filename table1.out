@@ -11,6 +11,7 @@
  p(R2=1,H1)               0.001    0.001
  Tests of R2=0:
  p(R2=0,H0)               0.080    0.088
+ se(R2)                   0.203    0.199   
  Number of Par.               3        3
 
  GLS CSR
@@ -23,4 +24,5 @@
  p(R2=1,H1)               0.000    0.000
  Tests of R2=0:
  p(R2=0,H0)               0.004    0.006
+ se(R2)                   0.065    0.063   
  Number of Par.               3        3
