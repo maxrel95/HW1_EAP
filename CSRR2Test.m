@@ -25,7 +25,7 @@ fprintf(' Period:  1963:1-2021:12\n')
 fprintf(' Number of lags = %2.0f\n',nlag)
 fprintf(' Number of assets = %2.0f\n',N)
 BigF = [FF FFStar];
-modelind = NaN(2, 3);
+modelind = NaN(2, 3); % nbr of facteur le 3
 modelind(1,1:3) = [1 2 3];                   % CAPM 
 modelind(2,1:3) = [4 5 6];           % C-LAB
 nmodel = 2;
@@ -68,6 +68,8 @@ for ii=1:2
     fprintf(' p(R2=1,H1)              %6.3f   %6.3f\n',pval1b)
     fprintf(' Tests of R2=0:\n')
     fprintf(' p(R2=0,H0)              %6.3f   %6.3f\n',pval2a)
+    fprintf(' se(R2)                  %6.3f   %6.3f   \n',rse)
+
     fprintf(' Number of Par.          %6.0f   %6.0f\n',nopar)
 end
 
