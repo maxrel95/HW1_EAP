@@ -378,10 +378,21 @@ _ffcomp70.set_index('date', inplace=True)
 print(stats.pearsonr(_ffcomp70['smb'], _ffcomp70['WSMB']))
 print(stats.pearsonr(_ffcomp70['hml'], _ffcomp70['WHML']))
 
+pd.DataFrame(
+    [ 
+        stats.pearsonr(_ffcomp70['smb'], _ffcomp70['WSMB'])[0],
+        stats.pearsonr(_ffcomp70['hml'], _ffcomp70['WHML'])[0]
+    ], columns=['Correlation'], index=['SMB', 'HML']
+).T.round( 4 ).to_latex( 'tables/corrFacteur.tex' )
+
 _ffcomp.head(2)
 
 (1+_ffcomp70[['hml', 'WHML']]).cumprod().plot()
 (1+_ffcomp70[['smb', 'WSMB']]).cumprod().plot()
+
+####################################################################
+#################### Test the statistical model ####################
+####################################################################
 
 famaFrenchFactor = _ff
 factorStar = ff_factors[ff_factors['date']>='1963-01-01']
@@ -400,8 +411,9 @@ testassets = allData.iloc[ :, -25:]
 # load industry portfolio
 industries = pd.read_excel( 'FF10Industry.xlsx', index_col=0, parse_dates=True ) / 100
 testassets = pd.merge(testassets, industries, how='inner', on='date')
-#( testassets.subtract(allFactor[ 'rf' ], axis=0) ).to_excel( 'testassets.xlsx' )
-testassets.to_excel( 'testassets.xlsx' )
+tosave = testassets.subtract(allFactor[ 'rf' ], axis=0)
+tosave.to_excel( 'testassets.xlsx' )
+
 X1 = allFactor[ [ 'mktrf', 'smb', 'hml' ] ]
 X1.to_excel( 'FFFactors.xlsx' )
 
@@ -434,6 +446,18 @@ r2FF.index = ['R2']
 FFresults = pd.concat([alphasFF, marketFF, smbFF, hmlFF, r2FF], axis=0)
 print( FFresults )
 
+colsname = ['LowBM', 'BM2', 'BM3', 'BM4', 'HighBM']
+idxName = ['Small', 'ME2', 'ME3', 'ME4', 'Big']
+
+aFF = pd.DataFrame( alphasFF.iloc[ 0, :25 ].values.reshape( [ 5, 5 ] ),
+    columns=colsname, index=idxName )
+aFF.round( 4 ).to_latex( 'tables/aFF.tex' )
+aFFTstat = pd.DataFrame( alphasFF.iloc[ 1, :25 ].values.reshape( [ 5, 5 ] ),
+    columns=colsname, index=idxName )
+aFFTstat.round( 4 ).to_latex( 'tables/aFFTstat.tex' )
+
+alphasFF.iloc[ :, 25: ].round( 4 ).to_latex( 'tables/aFFindustry.tex' )
+
 muFF =  allFactor[ [ 'mktrf', 'smb', 'hml' ] ].mean()
 covFF =  allFactor[ [ 'mktrf', 'smb', 'hml' ] ].cov()
 covFFe = residualFF.cov()
@@ -442,16 +466,18 @@ T = residualFF.__len__()
 N = residualFF.shape[ 1 ]
 K = muFF.shape[ 0 ]
 
+# tstat for the mean as in ff
 averageFFTstats = ( ( T**( 1/2 ) )*muFF.values ) / ( np.diag( covFF.values )**( 1/2 ) )
 print( averageFFTstats )
 
-factorPart = 1 + ( muFF.values @ np.linalg.inv( covFF ) ) @ muFF.values 
-alphapart = np.matmul( np.matmul( alphasFF.loc[ 'alpha', : ].values, np.linalg.inv( covFFe ) ),
-    alphasFF.loc[ 'alpha', : ].values )
-
+factorPart = 1 + ( muFF.values.T @ np.linalg.inv( covFF ) ) @ muFF.values 
+alphapart = alphasFF.iloc[ 0, :25 ].values.T @ np.linalg.inv( covFFe.iloc[ :25, :25] ) @ alphasFF.iloc[ 0, :25 ].values
+alphapartFull = alphasFF.loc[ 'alpha', : ].values.T @ np.linalg.inv( covFFe ) @ alphasFF.loc[ 'alpha', : ].values
 jointTestAlphaFF = ( ( T - N - K) / N ) * ( factorPart ** ( -1 ) ) * alphapart
-cvJointAlphaTest = stats.f.ppf(0.95, N, T-N-K)
-print( jointTestAlphaFF, cvJointAlphaTest )
+jointTestAlphaFFFull = ( ( T - N - K) / N ) * ( factorPart ** ( -1 ) ) * alphapartFull
+cvJointAlphaTestFull = 1 - stats.f.ppf(0.95, T - N - K, N )
+cvJointAlphaTest = 1 - stats.f.ppf(0.95,  T - ( N-10 ) - K, N-10 ) ##### need to check 
+print( jointTestAlphaFF, cvJointAlphaTest, jointTestAlphaFFFull, cvJointAlphaTestFull )
 
 ## fama french star
 X1 = allFactor[ [ 'mktrf', 'WSMB', 'WHML' ] ]
@@ -488,21 +514,41 @@ FFresultsStar = pd.concat( [ alphasFFStar, marketFFStar, smbFFStar,hmlFFStar, r2
                              axis=0 )
 print( FFresultsStar )
 
+aFFSTar = pd.DataFrame( alphasFFStar.iloc[ 0, :25 ].values.reshape( [ 5, 5 ] ),
+    columns=colsname, index=idxName )
+aFFSTar.round( 4 ).to_latex( 'tables/aFFStar.tex', )
+aFFStarTstat = pd.DataFrame( alphasFFStar.iloc[ 1, :25 ].values.reshape( [ 5, 5 ] ),
+    columns=colsname, index=idxName )
+aFFStarTstat.round( 4 ).to_latex( 'tables/aFFSTarTstat.tex', )
+
+alphasFFStar.iloc[ :, 25: ].round( 4 ).to_latex( 'tables/aFFStarindustry.tex' )
+
 muFFStar =  allFactor[ [ 'mktrf', 'WSMB', 'WHML' ] ].mean()
 covFFStar =  allFactor[ [ 'mktrf', 'WSMB', 'WHML' ] ].cov()
-covFFeStar = residualFF.cov()
+covFFeStar = residualFFStar.cov()
 
 averageFFStarTstats = ( ( T**( 1/2 ) )*muFFStar.values ) / ( np.diag( covFFStar.values )**( 1/2 ) )
 print( averageFFStarTstats )
 
 factorPartStar = 1 + ( muFFStar.values @ np.linalg.inv( covFFStar ) ) @ muFFStar.values 
-alphapartStar = np.matmul( np.matmul( alphasFFStar.loc[ 'alpha', : ].values, np.linalg.inv( covFFeStar ) ),
-    alphasFFStar.loc[ 'alpha', : ].values )
-
+alphapartStarFull = alphasFFStar.loc[ 'alpha', : ].values.T @ np.linalg.inv( covFFeStar ) @ alphasFFStar.loc[ 'alpha', : ].values
+alphapartStar = alphasFFStar.iloc[ 0, :25 ].values.T @ np.linalg.inv( covFFeStar.iloc[ :25, :25] ) @ alphasFFStar.iloc[ 0, :25 ].values
 jointTestAlphaFFStar = ( ( T - N - K ) / N ) * ( factorPartStar ** ( -1 ) ) * alphapartStar
-print( jointTestAlphaFFStar, cvJointAlphaTest )
+jointTestAlphaFFStarFull = ( ( T - N - K ) / N ) * ( factorPartStar ** ( -1 ) ) * alphapartStarFull
+1 - stats.f.cdf([ jointTestAlphaFFStar, jointTestAlphaFFStarFull ])
+print( jointTestAlphaFFStar, 1 - stats.f.cdf( jointTestAlphaFFStar, ( N - 10 ), ( T - ( N - 10 ) - K ) ) )
+print( jointTestAlphaFFStarFull, 1 - stats.f.cdf( jointTestAlphaFFStarFull, N, ( T - N - K ) ) )
 
-## Sharpe ratio test
+grsTest = pd.DataFrame( np.vstack(
+    [ np.hstack( [jointTestAlphaFF, jointTestAlphaFFFull, jointTestAlphaFFStar, jointTestAlphaFFStarFull]),
+     np.hstack( [ 1 - stats.f.cdf( jointTestAlphaFFStar, ( N - 10 ), ( T - ( N - 10 ) - K ) ),
+      1 - stats.f.cdf( jointTestAlphaFFStarFull, N, ( T - N - K ) ),
+       1 - stats.f.cdf( jointTestAlphaFFStar, ( N - 10 ), ( T - ( N - 10 ) - K ) ),
+       1 - stats.f.cdf( jointTestAlphaFFStarFull, N, ( T - N - K ) ) ])] ),
+      columns=[ 'FF3 25x25', 'FF3 25x25+industry', 'FF3^* 25x25', 'FF3^* 25x25+industry'], index=['GRS', 'p-Values'])
+grsTest.round( 4 ).to_latex( 'tables/grs.tex' )
+
+#############3 Sharpe ratio test
 FA = allFactor[ [ 'mktrf', 'smb', 'hml' ] ].values
 FB = allFactor[ [ 'mktrf', 'WSMB', 'WHML' ] ].values
 KA = K
@@ -529,8 +575,11 @@ dt1 = 2*( uA-uB ) - ( uA**2 - uB**2 ) + ( theta2A - theta2B ) # % not imposing t
 vd1 = nw( dt1, lag=0 )
 pval2a = 2 * ( 1-stats.norm.cdf( np.abs( dtheta2 ) / np.sqrt( vd1 / T ) ) )
 #pval2b = 2 * (1-stats.norm.cdf( np.abs( dtheta2 ) / np.sqrt( vd / T ) ) )
-
-## CSR r2 test 
-# move to matlab
+pd.DataFrame( 
+    [
+        dtheta2[0][0], pval2a[0][0]
+    ],
+    columns=['SR^2 test'], index=['tstat', 'pvalue']
+).round(4).to_latex('tables/shr2test.tex')
 
 
