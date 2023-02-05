@@ -4,37 +4,37 @@
  OLS
  Difference in R2s
  Model     FF3Star
- FF3       0.017
+ FF3       0.036
 
  p-value under correctly specified models
  Model     FF3Star
- FF3       0.342
+ FF3       0.087
 
  p-value under misspecified models (using normal tests for non-nested models)
  Model     FF3Star
- FF3       0.694
+ FF3       0.449
 
  p-value under misspecified models (using sequential tests for non-nested models)
  Model    FF3Star
- FF3       0.128
+ FF3       0.117
 
  Number of Additional Rejections Using Normal Tests =  0
 
  GLS
  Difference in R2s
  Model     FF3Star
- FF3       0.008
+ FF3       0.031
 
  p-value under correctly specified models
  Model     FF3Star
- FF3       0.848
+ FF3       0.175
 
  p-value under misspecified models (using normal tests for non-nested models)
  Model     FF3Star
- FF3       0.851
+ FF3       0.475
 
  p-value under misspecified models (using sequential tests for non-nested models)
  Model    FF3Star
- FF3       0.851
+ FF3       0.475
 
  Number of Additional Rejections Using Normal Tests =  0

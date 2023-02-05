@@ -165,7 +165,7 @@ crsp2['year']=crsp2['jdate'].dt.year
 crsp2['quarter'] = crsp2['jdate'].dt.quarter
 crsp2['month']=crsp2['jdate'].dt.month
 
-decme=crsp2[crsp2['month'].isin([ 3, 6, 9, 12 ])] # take all decembre market cap
+decme=crsp2[crsp2[ 'month' ].isin( [ 3, 6, 9, 12 ] )] # take all decembre market cap
 decme=decme[['permno','date','jdate','me','year', 'month', 'quarter']].rename(columns={'me':'dec_me'}) # lagged by 6 month the market cap
 decme['ffdate'] = decme['jdate']+MonthEnd( 6 )
 decme['ffyear'] = decme['ffdate'].dt.year
@@ -175,7 +175,7 @@ decme['ffquarter'] = decme['ffdate'].dt.quarter
 decme = decme[['permno','ffyear', 'ffmonth', 'ffquarter', 'dec_me']]
 
 ### July to June dates
-crsp2['ffdate']=crsp2['jdate']+MonthEnd(-6) # lag the date by 6 month 
+crsp2['ffdate']=crsp2['jdate']+MonthEnd( 0 ) # lag the date by 6 month 
 crsp2['ffyear']=crsp2['ffdate'].dt.year # get the year 
 crsp2['ffmonth']=crsp2['ffdate'].dt.month # get the month 
 crsp2['ffquarter']=crsp2['ffdate'].dt.quarter # get the month 
@@ -241,7 +241,6 @@ nyse=ccm_jun[ (ccm_jun['beme']>0) & (ccm_jun['me']>0) & \
              (ccm_jun['count']>=1) & ((ccm_jun['shrcd']==10) | (ccm_jun['shrcd']==11))]
 
 # size breakdown
-#nyse_sz=nyse.groupby(['jdate'])['me'].quantile( q=[0.25, 0.75]).reset_index()
 nyse_sz=nyse.groupby(['jdate'])['me'].describe(percentiles=[0.25, 0.75]).reset_index()
 nyse_sz=nyse_sz[['jdate','25%','75%']].rename(columns={'25%':'sz25', '75%':'sz75'})
 
@@ -289,6 +288,7 @@ ccm1_jun['nonmissport']=np.where((ccm1_jun['bmport']!=''), 1, 0)
 
 # store portfolio assignment as of June
 june=ccm1_jun[['permno','date', 'jdate', 'bmport','szport','posbm','nonmissport']]
+june[ 'jdate' ] = june[ 'jdate' ] + MonthEnd( 1 ) 
 june['ffyear']=june['jdate'].dt.year
 june['ffmonth'] = june['jdate'].dt.month
 june['ffquarter'] = june['jdate'].dt.quarter
@@ -302,19 +302,6 @@ ccm3=pd.merge(crsp3,
 ccm4=ccm3[(ccm3['wt']>0)& (ccm3['posbm']==1) & (ccm3['nonmissport']==1) & 
           ((ccm3['shrcd']==10) | (ccm3['shrcd']==11))]
 
-#ccm12 = ccm2.drop_duplicates(["permno", "datadate"])
-#ccm12['permno'] = ccm12['permno'].astype( int )
-#ccm12['jdate'] = ccm2['datadate']+MonthEnd(0)
-#bookvalue = ccm12.pivot( index='jdate', columns='permno', values='be' )
-
-#marketcap = crsp2.pivot( index='jdate', columns='permno', values='me' )
-#marketcap[ bookvalue.columns.to_list() ]
-#shrcode = crsp2.pivot( index='jdate', columns='permno', values='shrcd' )
-#exchcode = crsp2.pivot( index='jdate', columns='permno', values='exchcd' )
-#ret = crsp2.pivot( index='jdate', columns='permno', values='ret' )
-#retx = crsp2.pivot( index='jdate', columns='permno', values='retx' )
-#retadj = crsp2.pivot( index='jdate', columns='permno', values='retadj' )3
-
 ############################
 # Form Fama French Factors #
 ############################
@@ -327,7 +314,6 @@ def wavg(group, avg_name, weight_name):
         return (d * w).sum() / w.sum()
     except ZeroDivisionError:
         return np.nan
-
 
 # value-weigthed return
 vwret=ccm4.groupby(['jdate','szport','bmport']).apply(wavg, 'retadj','wt').to_frame().reset_index().rename(columns={0: 'vwret'})
@@ -384,6 +370,25 @@ pd.DataFrame(
 ).T.round( 4 ).to_latex( 'tables/corrFacteur.tex' )
 
 _ffcomp.head(2)
+_ffcomp.dtypes
+_ffcomp.tail(2)
+
+plt.figure(figsize=(16,12))
+plt.suptitle('Comparison of Results', fontsize=20)
+
+ax1 = plt.subplot(211)
+ax1.set_title('SMB', fontsize=15)
+ax1.plot(_ffcomp['smb'], 'r--', _ffcomp['WSMB'], 'b-')
+ax1.legend(('smb','WSMB'), loc='upper right', shadow=True)
+
+ax2 = plt.subplot(212)
+ax2.set_title('HML', fontsize=15)
+ax2.plot(_ffcomp['hml'], 'r--', _ffcomp['WHML'], 'b-')
+ax2.legend(('hml','WHML'), loc='upper right', shadow=True)
+
+plt.subplots_adjust(top=0.92, hspace=0.2)
+plt.savefig("ret.png")
+plt.show()
 
 (1+_ffcomp70[['hml', 'WHML']]).cumprod().plot()
 (1+_ffcomp70[['smb', 'WSMB']]).cumprod().plot()
@@ -533,7 +538,6 @@ alphapartStarFull = alphasFFStar.loc[ 'alpha', : ].values.T @ np.linalg.inv( cov
 alphapartStar = alphasFFStar.iloc[ 0, :25 ].values.T @ np.linalg.inv( covFFeStar.iloc[ :25, :25] ) @ alphasFFStar.iloc[ 0, :25 ].values
 jointTestAlphaFFStar = ( ( T - N - K ) / N ) * ( factorPartStar ** ( -1 ) ) * alphapartStar
 jointTestAlphaFFStarFull = ( ( T - N - K ) / N ) * ( factorPartStar ** ( -1 ) ) * alphapartStarFull
-1 - stats.f.cdf([ jointTestAlphaFFStar, jointTestAlphaFFStarFull ])
 print( jointTestAlphaFFStar, 1 - stats.f.cdf( jointTestAlphaFFStar, ( N - 10 ), ( T - ( N - 10 ) - K ) ) )
 print( jointTestAlphaFFStarFull, 1 - stats.f.cdf( jointTestAlphaFFStarFull, N, ( T - N - K ) ) )
 
